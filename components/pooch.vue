@@ -6,19 +6,13 @@
     <div class="pooch__data">
       <div class="pooch__info">
         <div class="pooch__headline">
-          <div class="pooch__name">
-            {{ name }}
-          </div>
+          <div class="pooch__name" v-html="name" />
           <!-- проверку на email нужно впихнуть тоже -->
-          <a v-if="isCorrectEmail" :href="'mailto:'+email" class="pooch__email">
-            {{ email }}
-          </a>
+          <a v-if="isCorrectEmail" :href="'mailto:'+email" class="pooch__email" v-html="email" />
         </div>
-        <div class="pooch__position">
-          {{ position }}
-        </div>
+        <div class="pooch__position" v-html="position" />
         <div class="pooch__full-address">
-          <span v-if="address" class="pooch__address">{{ address }}</span><span v-if="city" class="pooch__city">{{ city }}</span>
+          <span v-if="address" class="pooch__address" v-html="address" /><span v-if="city" class="pooch__city" v-html="city" />
         </div>
       </div>
       <div class="divider" :class="{'-transparent': marked}" />
@@ -162,7 +156,7 @@ export default {
 
 .pooch__address + .pooch__city {
   ::before {
-    content: ',';
+    content: ', ';
   }
 }
 </style>

@@ -3,19 +3,31 @@
     <div class="search__icon" @click="goToInput">
       <slot><i class="icon -search" /></slot>
     </div>
-    <input ref="search" type="text" class="search__input" placeholder="Type search text here" @keyup="onChange">
+    <input
+      ref="search"
+      v-model="inputValue"
+      type="text"
+      class="search__input"
+      placeholder="Type search text here"
+      @keyup="onChange"
+    >
   </div>
 </template>
 
 <script>
 export default {
   name: 'Input',
+  data () {
+    return {
+      inputValue: ''
+    }
+  },
   methods: {
-    onChange (value) {
+    onChange () {
       clearTimeout(this.emitTemeout)
       this.emitTemeout = setTimeout(() => {
-        this.$emit('change', value)
-      }, 50)
+        this.$emit('change', this.inputValue)
+      }, 100)
     },
     goToInput () {
       this.$refs.search && this.$refs.search.focus()

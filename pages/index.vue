@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <custom-input />
+    <custom-input @change="filter" />
     <div ref="scroller" class="pooch-container" @scroll="resizeOutputList">
       <pooch
         v-for="(item, index) in outputList"
@@ -36,7 +36,10 @@ export default {
     }
   },
   created () {
+    // init non reactive fields
     this.list = []
+    this.prevFilterValue = ''
+    // get data
     this.getData()
   },
   methods: {
@@ -60,6 +63,49 @@ export default {
         this.outputCount += this.step
         this.outputList = this.list.slice(0, this.outputCount)
       }
+    },
+    filter (value) {
+      if (value && value.length > 1) {
+        if (this.prevFilterValue && value.includes(this.prevFilterValue)) {
+          this.outputList = this.findAndMarkWord(value, this.outputList, true)
+        } else {
+          this.outputList = this.findAndMarkWord(value, this.list.slice(0, 50))
+        }
+        this.prevFilterValue = value
+      } else {
+        // как-то не весело. вот проскролили мы весь список
+        // чо то там отфильтровали
+        // а теперь опять сначала?
+        // можно для фильтрации совсем другой список показывать
+        // но тогда верстка и объем памяти в два раза возрастут...
+        // и большой вопрос, а нормально ли отрендерит браузер к примеру сразу 1000 элементов?
+        // так то мы из по чуть чуть хуярим
+        this.outputCount = this.step
+        this.outputList = this.list.slice(0, this.outputCount)
+      }
+    },
+    findAndMarkWord (value, array, clearMarked) {
+      if (Array.isArray(array) && value) {
+        // переделать на цикл
+        // тут же в случае совпадения поискового слова создавать новый объект и созранять его
+        return array.filter((item) => {
+          if (clearMarked) {
+            for (const key in item) {
+              item[key] = item[key].replace(/<\/?mark>/g, '')
+            }
+          }
+          let counter = 0
+          for (const key in item) {
+            if (item[key] && item[key].toLowerCase().includes(value.toLowerCase())) {
+              const regexp = new RegExp(value.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&'), 'gim')
+              item[key] = item[key].replace(regexp, `<mark>${value}</mark>`)
+              counter++
+            }
+          }
+          return counter
+        })
+      }
+      return []
     },
     selectionChange (event, item, index) {}
   }
