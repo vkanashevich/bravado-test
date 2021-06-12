@@ -3,7 +3,7 @@
     <custom-input />
     <div ref="scroller" class="pooch-container" @scroll="resizeOutputList">
       <pooch
-        v-for="item in outputList"
+        v-for="(item, index) in outputList"
         :key="item.name+item.email"
         class="-mt-20"
         :name="item.name"
@@ -12,6 +12,7 @@
         :position="item.title"
         :email="item.email"
         :photo="item.avatar"
+        @selectionChange="selectionChange($event, item, index)"
       />
     </div>
   </div>
@@ -23,22 +24,19 @@ export default {
   // потом эту ебалу надо пернести в стэйт по хорошему
   // хотя есть вопрос, в нужен ли стэйт или нет на такие маленькие объемы?
   // для понтов и и обратимости посикат олько что...
+  //
+  // тут есть мысль что нахуй стэйт. потому что весит дохера из-за реактивности
   data () {
     return {
-      list: [],
+      outputList: [],
       outputCount: 50,
       step: 50,
       // надо бы красоту для ошибок сделать
       isError: false
     }
   },
-  computed: {
-    // плохое решение, весь массив завново пересобираем
-    outputList () {
-      return this.list.slice(0, this.outputCount)
-    }
-  },
   created () {
+    this.list = []
     this.getData()
   },
   methods: {
@@ -46,16 +44,24 @@ export default {
       const response = await fetch('https://gist.githubusercontent.com/allaud/093aa499998b7843bb10b44ea6ea02dc/raw/c400744999bf4b308f67807729a6635ced0c8644/users.json')
       if (response.ok) {
         this.list = await response.json()
+        if (Array.isArray(this.list)) {
+          this.outputList = this.list.slice(0, this.outputCount)
+        }
       } else {
         this.isError = true
       }
     },
-    resizeOutputList (event) {
+    // рабочая но по моему не самая хорошая реализация
+    // потому что рано или поздно записей будет ну ооочень много, и в теории сам по себе проход по и проверка ключей по 10000+ записей будет долгим
+    // но если виртуальный скролл будет работать хорошо, то можно оставить
+    resizeOutputList () {
       const scroller = this.$refs.scroller
       if (scroller.scrollHeight - scroller.scrollTop < 1200) {
         this.outputCount += this.step
+        this.outputList = this.list.slice(0, this.outputCount)
       }
-    }
+    },
+    selectionChange (event, item, index) {}
   }
 }
 </script>

@@ -61,15 +61,12 @@ export default {
     city: {
       type: String,
       default: ''
-    },
-    marked: {
-      type: Boolean,
-      default: false
     }
   },
   data () {
     return {
-      localPhoto: ''
+      localPhoto: '',
+      marked: false
     }
   },
   computed: {
@@ -96,7 +93,8 @@ export default {
       this.localPhoto = require('~/assets/img/no-photo.png')
     },
     toggleSelection () {
-      this.$emit('update:marked', !this.marked)
+      this.marked = !this.marked
+      this.$emit('selectionChange', this.marked)
     }
   }
 }
