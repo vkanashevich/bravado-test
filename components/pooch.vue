@@ -1,7 +1,7 @@
 <template>
   <div class="pooch">
     <div class="pooch__photo">
-      <img class="photo" alt="photo" :src="photo" @error="loadPhotoError">
+      <img class="photo" alt="photo" :src="localPhoto" @error="setDefaultOnError">
     </div>
     <div class="pooch__data">
       <div class="pooch__info">
@@ -17,14 +17,14 @@
         <div class="pooch__position">
           {{ position }}
         </div>
-        <div class="pooch__address">
-          {{ address }}
+        <div class="pooch__full-address">
+          <span v-if="address" class="pooch__address">{{ address }}</span><span v-if="city" class="pooch__city">{{ city }}</span>
         </div>
       </div>
-      <div class="divider" />
+      <div class="divider" :class="{'-transparent': marked}" />
       <div class="pooch__button-container">
-        <button class="pooch__button">
-          MARK AS SUITABLE | SKIP SELECTION {{ test }}
+        <button class="pooch__button" @click="toggleSelection">
+          {{ buttonText }}
         </button>
       </div>
     </div>
@@ -57,21 +57,46 @@ export default {
     address: {
       type: String,
       default: ''
+    },
+    city: {
+      type: String,
+      default: ''
+    },
+    marked: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
     return {
-      test: ''
+      localPhoto: ''
     }
   },
   computed: {
     isCorrectEmail () {
       return this.email && /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(this.email)
+    },
+    buttonText () {
+      return this.marked ? 'SKIP SELECTION' : 'MARK AS SUITABLE'
     }
   },
+  watch: {
+    photo: {
+      handler (newPhoto) {
+        this.localPhoto = newPhoto
+      },
+      immediate: true
+    }
+  },
+  created () {
+    console.log('created')
+  },
   methods: {
-    loadPhotoError () {
-      this.test = 'zzz'
+    setDefaultOnError () {
+      this.localPhoto = require('~/assets/img/no-photo.png')
+    },
+    toggleSelection () {
+      this.$emit('update:marked', !this.marked)
     }
   }
 }
@@ -119,7 +144,7 @@ export default {
     line-height: 20px;
   }
 
-  &__address {
+  &__full-address {
     font-size: 14px;
     line-height: 20px;
   }
@@ -134,6 +159,12 @@ export default {
 
   &__button {
     width: 138px;
+  }
+}
+
+.pooch__address + .pooch__city {
+  ::before {
+    content: ',';
   }
 }
 </style>

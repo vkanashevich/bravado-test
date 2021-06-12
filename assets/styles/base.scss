@@ -14,9 +14,14 @@ button {
   text-align: center;
   color: #009688;
   padding: 0;
+  cursor: pointer;
 
   &:focus {
     outline: none;
+  }
+
+  &:hover {
+    text-decoration: underline;
   }
 }
 
@@ -34,9 +39,12 @@ button {
   }
 }
 
-// в макете это чудо 3 пикселя в высоту да еще и пордер классический полупиксельный назначен. чо делаем?
 .divider {
-  height: 1px;
+  height: 3px;
   min-width: 100%;
-  background-color: rgba(0, 0, 0, 0.12);
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+
+  &.-transparent {
+    border-color: transparent;
+  }
 }
