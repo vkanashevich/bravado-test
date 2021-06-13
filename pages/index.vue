@@ -75,7 +75,7 @@ export default {
       if (value) {
         if (value.length > 1) {
           if (this.prevFilterValue && value.includes(this.prevFilterValue)) {
-            this.filteredList = this.findAndMarkWord(value, this.filteredList, true)
+            this.filteredList = this.findAndMarkWord(value, this.filteredList, this.prevFilterValue)
           } else {
             this.filteredList = this.findAndMarkWord(value, this.list)
           }
@@ -97,31 +97,50 @@ export default {
         this.outputList = this.list.slice(0, this.outputCount)
       }
     },
-    findAndMarkWord (value, array, isPreFiltered) {
+    findAndMarkWord (value, array, prevFilterValue) {
       const result = []
       if (Array.isArray(array) && value) {
         const regexp = new RegExp(`(${value.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gim')
+        const startIndex = prevFilterValue && value.indexOf(prevFilterValue)
         for (let i = 0; i < array.length; i++) {
           const item = array[i]
           let counter = 0
-          // if (isPreFiltered) {
-          //   // тут делаем какое-то красивое расширение
-          // } else {
-          // }
-          const matched = {}
-          for (const key in item) {
-            if (key !== 'avatar' && key !== 'matched' && item[key]) {
-              // console.log(key, item[key])
-              const res = [...item[key].matchAll(regexp)]
-              if (res.length) {
-                counter++
-                matched[key] = res
+          if (prevFilterValue) {
+            if (item.matched) {
+              const matched = {}
+              for (const key in item.matched) {
+                const resIndex = item.matched[key][0].index - startIndex
+                const substr = item[key].substr(resIndex, value.length)
+                if (substr.toLowerCase() === value.toLowerCase()) {
+                  matched[key] = [{
+                    0: substr,
+                    1: substr,
+                    index: resIndex
+                  }]
+                  counter++
+                }
+              }
+              if (counter) {
+                item.matched = matched
+                result.push(item)
               }
             }
-          }
-          if (counter) {
-            item.matched = matched
-            result.push(item)
+          } else {
+            const matched = {}
+            item.matched = {}
+            for (const key in item) {
+              if (key !== 'avatar' && key !== 'matched' && item[key]) {
+                const res = [...item[key].matchAll(regexp)]
+                if (res.length) {
+                  counter++
+                  matched[key] = res
+                }
+              }
+            }
+            if (counter) {
+              item.matched = matched
+              result.push(item)
+            }
           }
         }
       }
