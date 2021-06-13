@@ -6,13 +6,12 @@
     <div class="pooch__data">
       <div class="pooch__info">
         <div class="pooch__headline">
-          <div class="pooch__name" v-html="name" />
-          <!-- проверку на email нужно впихнуть тоже -->
-          <a v-if="isCorrectEmail" :href="'mailto:'+email" class="pooch__email" v-html="email" />
+          <div class="pooch__name" v-html="getName" />
+          <a v-if="isCorrectEmail" :href="'mailto:'+email" class="pooch__email" v-html="getEmail" />
         </div>
-        <div class="pooch__position" v-html="position" />
+        <div class="pooch__position" v-html="getPosition" />
         <div class="pooch__full-address">
-          <span v-if="address" class="pooch__address" v-html="address" /><span v-if="city" class="pooch__city" v-html="city" />
+          <span v-if="getAddress" class="pooch__address" v-html="getAddress" /><span v-if="getCity" class="pooch__city" v-html="getCity" />
         </div>
       </div>
       <div class="divider" :class="{'-transparent': marked}" />
@@ -55,6 +54,14 @@ export default {
     city: {
       type: String,
       default: ''
+    },
+    matched: {
+      type: Object,
+      default: null
+    },
+    isFilter: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
@@ -64,9 +71,23 @@ export default {
     }
   },
   computed: {
+    getName () {
+      return this.markWord('name')
+    },
+    getEmail () {
+      return this.markWord('email')
+    },
+    getPosition () {
+      return this.markWord('position')
+    },
+    getAddress () {
+      return this.markWord('address')
+    },
+    getCity () {
+      return this.markWord('city')
+    },
     isCorrectEmail () {
-      // return this.email && /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(this.email)
-      return this.email
+      return this.email && /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(this.email)
     },
     buttonText () {
       return this.marked ? 'SKIP SELECTION' : 'MARK AS SUITABLE'
@@ -84,6 +105,16 @@ export default {
     console.log('created')
   },
   methods: {
+    markWord (name) {
+      let result = this[name]
+      if (result && this.isFilter && this.matched && Array.isArray(this.matched[name])) {
+        this.matched[name].forEach((matchArr) => {
+          const word = matchArr[1]
+          result = result.slice(0, matchArr.index) + '<mark>' + word + '</mark>' + result.slice(matchArr.index + word.length)
+        })
+      }
+      return result
+    },
     setDefaultOnError () {
       this.localPhoto = require('~/assets/img/no-photo.png')
     },

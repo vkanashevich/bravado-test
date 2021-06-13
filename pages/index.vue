@@ -12,6 +12,8 @@
         :position="item.title"
         :email="item.email"
         :photo="item.avatar"
+        :matched="item.matched"
+        :is-filter="isFilter"
         @selectionChange="selectionChange($event, item, index)"
       />
     </div>
@@ -95,54 +97,33 @@ export default {
         this.outputList = this.list.slice(0, this.outputCount)
       }
     },
-    findAndMarkWord (value, array, clearMarked) {
+    findAndMarkWord (value, array, isPreFiltered) {
       const result = []
       if (Array.isArray(array) && value) {
-        // переделать на цикл
-        // тут же в случае совпадения поискового слова создавать новый объект и созранять его
         const regexp = new RegExp(`(${value.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gim')
         for (let i = 0; i < array.length; i++) {
-          let item = array[i]
-          if (clearMarked) {
-            for (const key in item) {
-              item[key] = item[key].replace(/<\/?mark>/g, '')
-            }
-          }
-          let isCopied = false
+          const item = array[i]
+          let counter = 0
+          // if (isPreFiltered) {
+          //   // тут делаем какое-то красивое расширение
+          // } else {
+          // }
+          const matched = {}
           for (const key in item) {
-            if (key !== 'avatar' && item[key] && item[key].toLowerCase().includes(value.toLowerCase())) {
-              if (!isCopied) {
-                item = Object.assign({}, item)
-                array[i] = item
-                isCopied = true
+            if (key !== 'avatar' && key !== 'matched' && item[key]) {
+              // console.log(key, item[key])
+              const res = [...item[key].matchAll(regexp)]
+              if (res.length) {
+                counter++
+                matched[key] = res
               }
-              console.log(i, item[key])
-              console.log(i, item)
-              item[key] = item[key].replace(regexp, '<mark>$1</mark>')
             }
           }
-          isCopied && result.push(item)
+          if (counter) {
+            item.matched = matched
+            result.push(item)
+          }
         }
-        // return array.filter((item, index) => {
-        //   if (clearMarked) {
-        //     for (const key in item) {
-        //       item[key] = item[key].replace(/<\/?mark>/g, '')
-        //     }
-        //   }
-        //   let counter = 0
-        //   let isCopied = false
-        //   for (const key in item) {
-        //     if (key !== 'avatar' && item[key] && item[key].toLowerCase().includes(value.toLowerCase())) {
-        //       if (!isCopied) {
-        //         item = Object.assign({}, item)
-        //         isCopied = true
-        //       }
-        //       item[key] = item[key].replace(regexp, '<mark>$1</mark>')
-        //       counter++
-        //     }
-        //   }
-        //   return counter
-        // })
       }
       return result
     },
