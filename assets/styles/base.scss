@@ -34,6 +34,12 @@ button {
 }
 
 .icon {
+  height: 100%;
+  width: 100%;
+  display: inline-block;
+  background-repeat: no-repeat no-repeat;
+  background-position: center;
+
   &.-search {
     background-image: url(~/assets/img/icons/search.svg);
   }

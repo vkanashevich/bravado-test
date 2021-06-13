@@ -65,7 +65,8 @@ export default {
   },
   computed: {
     isCorrectEmail () {
-      return this.email && /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(this.email)
+      // return this.email && /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(this.email)
+      return this.email
     },
     buttonText () {
       return this.marked ? 'SKIP SELECTION' : 'MARK AS SUITABLE'
@@ -154,9 +155,7 @@ export default {
   }
 }
 
-.pooch__address + .pooch__city {
-  ::before {
-    content: ', ';
-  }
+.pooch__address + .pooch__city::before {
+  content: ', ';
 }
 </style>

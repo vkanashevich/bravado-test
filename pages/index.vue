@@ -1,11 +1,11 @@
 <template>
   <div class="container">
     <custom-input @change="filter" />
-    <div ref="scroller" class="pooch-container" @scroll="resizeOutputList">
+    <div ref="scroller" class="pooch-container" @scroll.passive="poochScroll">
       <pooch
         v-for="(item, index) in outputList"
         :key="item.name+item.email"
-        class="-mt-20"
+        class="-mb-20"
         :name="item.name"
         :address="item.address"
         :city="item.city"
@@ -32,12 +32,14 @@ export default {
       outputCount: 50,
       step: 50,
       // надо бы красоту для ошибок сделать
-      isError: false
+      isError: false,
+      isFilter: false
     }
   },
   created () {
     // init non reactive fields
     this.list = []
+    this.filteredList = []
     this.prevFilterValue = ''
     // get data
     this.getData()
@@ -54,6 +56,9 @@ export default {
         this.isError = true
       }
     },
+    poochScroll () {
+      window.requestAnimationFrame(this.resizeOutputList)
+    },
     // рабочая но по моему не самая хорошая реализация
     // потому что рано или поздно записей будет ну ооочень много, и в теории сам по себе проход по и проверка ключей по 10000+ записей будет долгим
     // но если виртуальный скролл будет работать хорошо, то можно оставить
@@ -61,17 +66,22 @@ export default {
       const scroller = this.$refs.scroller
       if (scroller.scrollHeight - scroller.scrollTop < 1200) {
         this.outputCount += this.step
-        this.outputList = this.list.slice(0, this.outputCount)
+        this.outputList = this.isFilter ? this.filteredList.slice(0, this.outputCount) : this.list.slice(0, this.outputCount)
       }
     },
     filter (value) {
-      if (value && value.length > 1) {
-        if (this.prevFilterValue && value.includes(this.prevFilterValue)) {
-          this.outputList = this.findAndMarkWord(value, this.outputList, true)
-        } else {
-          this.outputList = this.findAndMarkWord(value, this.list.slice(0, 50))
+      if (value) {
+        if (value.length > 1) {
+          if (this.prevFilterValue && value.includes(this.prevFilterValue)) {
+            this.filteredList = this.findAndMarkWord(value, this.filteredList, true)
+          } else {
+            this.filteredList = this.findAndMarkWord(value, this.list)
+          }
+          this.isFilter = true
+          this.outputCount = this.step
+          this.outputList = this.filteredList.slice(0, this.outputCount)
+          this.prevFilterValue = value
         }
-        this.prevFilterValue = value
       } else {
         // как-то не весело. вот проскролили мы весь список
         // чо то там отфильтровали
@@ -80,32 +90,61 @@ export default {
         // но тогда верстка и объем памяти в два раза возрастут...
         // и большой вопрос, а нормально ли отрендерит браузер к примеру сразу 1000 элементов?
         // так то мы из по чуть чуть хуярим
+        this.isFilter = false
         this.outputCount = this.step
         this.outputList = this.list.slice(0, this.outputCount)
       }
     },
     findAndMarkWord (value, array, clearMarked) {
+      const result = []
       if (Array.isArray(array) && value) {
         // переделать на цикл
         // тут же в случае совпадения поискового слова создавать новый объект и созранять его
-        return array.filter((item) => {
+        const regexp = new RegExp(`(${value.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gim')
+        for (let i = 0; i < array.length; i++) {
+          let item = array[i]
           if (clearMarked) {
             for (const key in item) {
               item[key] = item[key].replace(/<\/?mark>/g, '')
             }
           }
-          let counter = 0
+          let isCopied = false
           for (const key in item) {
-            if (item[key] && item[key].toLowerCase().includes(value.toLowerCase())) {
-              const regexp = new RegExp(value.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&'), 'gim')
-              item[key] = item[key].replace(regexp, `<mark>${value}</mark>`)
-              counter++
+            if (key !== 'avatar' && item[key] && item[key].toLowerCase().includes(value.toLowerCase())) {
+              if (!isCopied) {
+                item = Object.assign({}, item)
+                array[i] = item
+                isCopied = true
+              }
+              console.log(i, item[key])
+              console.log(i, item)
+              item[key] = item[key].replace(regexp, '<mark>$1</mark>')
             }
           }
-          return counter
-        })
+          isCopied && result.push(item)
+        }
+        // return array.filter((item, index) => {
+        //   if (clearMarked) {
+        //     for (const key in item) {
+        //       item[key] = item[key].replace(/<\/?mark>/g, '')
+        //     }
+        //   }
+        //   let counter = 0
+        //   let isCopied = false
+        //   for (const key in item) {
+        //     if (key !== 'avatar' && item[key] && item[key].toLowerCase().includes(value.toLowerCase())) {
+        //       if (!isCopied) {
+        //         item = Object.assign({}, item)
+        //         isCopied = true
+        //       }
+        //       item[key] = item[key].replace(regexp, '<mark>$1</mark>')
+        //       counter++
+        //     }
+        //   }
+        //   return counter
+        // })
       }
-      return []
+      return result
     },
     selectionChange (event, item, index) {}
   }
@@ -119,11 +158,13 @@ export default {
   height: 100%;
   background: #fff;
   padding: 19px 12px 0;
+  overflow: hidden;
 }
 
 .pooch-container {
   overflow: auto;
   height: 100%;
+  margin-top: 20px;
 }
 
 .poach {
