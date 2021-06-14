@@ -12,8 +12,7 @@
         :position="item.title"
         :email="item.email"
         :photo="item.avatar"
-        :matched="item.matched"
-        :is-filter="isFilter"
+        :search-value="searchValue"
         @selectionChange="selectionChange($event, item, index)"
       />
     </div>
@@ -35,14 +34,15 @@ export default {
       step: 50,
       // надо бы красоту для ошибок сделать
       isError: false,
-      isFilter: false
+      searchValue: ''
     }
   },
   created () {
     // init non reactive fields
-    this.list = []
+    this.sourceList = []
     this.filteredList = []
-    this.prevFilterValue = ''
+    this.memoization = new Map()
+    this.prevsearchValue = ''
     // get data
     this.getData()
   },
@@ -50,9 +50,9 @@ export default {
     async getData () {
       const response = await fetch('https://gist.githubusercontent.com/allaud/093aa499998b7843bb10b44ea6ea02dc/raw/c400744999bf4b308f67807729a6635ced0c8644/users.json')
       if (response.ok) {
-        this.list = await response.json()
-        if (Array.isArray(this.list)) {
-          this.outputList = this.list.slice(0, this.outputCount)
+        this.sourceList = await response.json()
+        if (Array.isArray(this.sourceList)) {
+          this.outputList = this.sourceList.slice(0, this.outputCount)
         }
       } else {
         this.isError = true
@@ -68,21 +68,27 @@ export default {
       const scroller = this.$refs.scroller
       if (scroller.scrollHeight - scroller.scrollTop < 1200) {
         this.outputCount += this.step
-        this.outputList = this.isFilter ? this.filteredList.slice(0, this.outputCount) : this.list.slice(0, this.outputCount)
+        this.outputList = this.searchValue ? this.filteredList.slice(0, this.outputCount) : this.sourceList.slice(0, this.outputCount)
       }
     },
     filter (value) {
+      this.searchValue = value
       if (value) {
         if (value.length > 1) {
-          if (this.prevFilterValue && value.includes(this.prevFilterValue)) {
-            this.filteredList = this.findAndMarkWord(value, this.filteredList, this.prevFilterValue)
+          const cachedList = this.getFromMemoization(value)
+          if (!cachedList) {
+            if (this.prevsearchValue && value.includes(this.prevsearchValue)) {
+              this.filteredList = this.filterList(value, this.filteredList)
+            } else {
+              this.filteredList = this.filterList(value, this.sourceList)
+            }
+            this.addToMemoization(value, this.filteredList)
           } else {
-            this.filteredList = this.findAndMarkWord(value, this.list)
+            this.filteredList = cachedList
           }
-          this.isFilter = true
           this.outputCount = this.step
           this.outputList = this.filteredList.slice(0, this.outputCount)
-          this.prevFilterValue = value
+          this.prevsearchValue = value
         }
       } else {
         // как-то не весело. вот проскролили мы весь список
@@ -92,52 +98,34 @@ export default {
         // но тогда верстка и объем памяти в два раза возрастут...
         // и большой вопрос, а нормально ли отрендерит браузер к примеру сразу 1000 элементов?
         // так то мы из по чуть чуть хуярим
-        this.isFilter = false
         this.outputCount = this.step
-        this.outputList = this.list.slice(0, this.outputCount)
+        this.outputList = this.sourceList.slice(0, this.outputCount)
       }
     },
-    findAndMarkWord (value, array, prevFilterValue) {
+    filterList (value, array) {
       const result = []
       if (Array.isArray(array) && value) {
-        const regexp = new RegExp(`(${value.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gim')
-        const startIndex = prevFilterValue && value.indexOf(prevFilterValue)
+        const lowerValue = value.toLowerCase()
         for (let i = 0; i < array.length; i++) {
           const item = array[i]
-          let counter = 0
-          if (prevFilterValue) {
-            if (item.matched) {
-              for (const key in item.matched) {
-                const resIndex = item.matched[key][0].index - startIndex
-                const substr = item[key].substr(resIndex, value.length)
-                if (substr.toLowerCase() === value.toLowerCase()) {
-                  item.matched[key][0][0] = item.matched[key][0][1] = value
-                  item.matched[key][0].index = resIndex
-                  counter++
-                }
-              }
-              counter && result.push(item)
-            }
-          } else {
-            const matched = {}
-            item.matched = {}
-            for (const key in item) {
-              if (key !== 'avatar' && key !== 'matched' && item[key]) {
-                const res = [...item[key].matchAll(regexp)]
-                if (res.length) {
-                  counter++
-                  matched[key] = res
-                }
-              }
-            }
-            if (counter) {
-              item.matched = matched
+          for (const key in item) {
+            if (key !== 'avatar' && item[key].toLowerCase().includes(lowerValue)) {
               result.push(item)
+              break
             }
           }
         }
       }
       return result
+    },
+    addToMemoization (value, dataList) {
+      if (value && value.length > 2 && Array.isArray(dataList)) {
+        const key = value.toLowerCase()
+        !this.memoization.has(key) && this.memoization.set(value, dataList.slice())
+      }
+    },
+    getFromMemoization (value) {
+      return this.memoization.get(value)
     },
     selectionChange (event, item, index) {}
   }

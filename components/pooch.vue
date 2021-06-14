@@ -55,13 +55,9 @@ export default {
       type: String,
       default: ''
     },
-    matched: {
-      type: Object,
-      default: null
-    },
-    isFilter: {
-      type: Boolean,
-      default: false
+    searchValue: {
+      type: String,
+      default: ''
     }
   },
   data () {
@@ -102,16 +98,14 @@ export default {
     }
   },
   created () {
-    console.log('created')
+    console.log('pooch created')
   },
   methods: {
     markWord (name) {
       let result = this[name]
-      if (result && this.isFilter && this.matched && Array.isArray(this.matched[name])) {
-        this.matched[name].forEach((matchArr) => {
-          const word = matchArr[1]
-          result = result.slice(0, matchArr.index) + '<mark>' + word + '</mark>' + result.slice(matchArr.index + word.length)
-        })
+      if (result && this.searchValue) {
+        const regexp = new RegExp(`(${this.searchValue.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gim')
+        result = result.replace(regexp, '<mark>$1</mark>')
       }
       return result
     },

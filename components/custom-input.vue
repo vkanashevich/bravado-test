@@ -27,7 +27,7 @@ export default {
       clearTimeout(this.emitTemeout)
       this.emitTemeout = setTimeout(() => {
         this.$emit('change', this.inputValue.trim())
-      }, 100)
+      }, 200)
     },
     goToInput () {
       this.$refs.search && this.$refs.search.focus()
