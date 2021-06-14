@@ -6,19 +6,12 @@
     <div class="pooch__data">
       <div class="pooch__info">
         <div class="pooch__headline">
-          <div class="pooch__name">
-            {{ name }}
-          </div>
-          <!-- проверку на email нужно впихнуть тоже -->
-          <a v-if="isCorrectEmail" :href="'mailto:'+email" class="pooch__email">
-            {{ email }}
-          </a>
+          <div class="pooch__name" v-html="getName" />
+          <a v-if="isCorrectEmail" :href="'mailto:'+email" class="pooch__email" v-html="getEmail" />
         </div>
-        <div class="pooch__position">
-          {{ position }}
-        </div>
+        <div class="pooch__position" v-html="getPosition" />
         <div class="pooch__full-address">
-          <span v-if="address" class="pooch__address">{{ address }}</span><span v-if="city" class="pooch__city">{{ city }}</span>
+          <span v-if="getAddress" class="pooch__address" v-html="getAddress" /><span v-if="getCity" class="pooch__city" v-html="getCity" />
         </div>
       </div>
       <div class="divider" :class="{'-transparent': marked}" />
@@ -62,17 +55,33 @@ export default {
       type: String,
       default: ''
     },
-    marked: {
-      type: Boolean,
-      default: false
+    searchValue: {
+      type: String,
+      default: ''
     }
   },
   data () {
     return {
-      localPhoto: ''
+      localPhoto: '',
+      marked: false
     }
   },
   computed: {
+    getName () {
+      return this.markWord('name')
+    },
+    getEmail () {
+      return this.markWord('email')
+    },
+    getPosition () {
+      return this.markWord('position')
+    },
+    getAddress () {
+      return this.markWord('address')
+    },
+    getCity () {
+      return this.markWord('city')
+    },
     isCorrectEmail () {
       return this.email && /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(this.email)
     },
@@ -89,14 +98,23 @@ export default {
     }
   },
   created () {
-    console.log('created')
+    console.log('pooch created')
   },
   methods: {
+    markWord (name) {
+      let result = this[name]
+      if (result && this.searchValue) {
+        const regexp = new RegExp(`(${this.searchValue.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gim')
+        result = result.replace(regexp, '<mark>$1</mark>')
+      }
+      return result
+    },
     setDefaultOnError () {
       this.localPhoto = require('~/assets/img/no-photo.png')
     },
     toggleSelection () {
-      this.$emit('update:marked', !this.marked)
+      this.marked = !this.marked
+      this.$emit('selectionChange', this.marked)
     }
   }
 }
@@ -162,9 +180,7 @@ export default {
   }
 }
 
-.pooch__address + .pooch__city {
-  ::before {
-    content: ',';
-  }
+.pooch__address + .pooch__city::before {
+  content: ', ';
 }
 </style>
