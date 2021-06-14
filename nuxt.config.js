@@ -52,5 +52,18 @@ export default {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
+  },
+
+  router: {
+    extendRoutes (routes, resolve) {
+      routes.push({
+        path: '/search/:value',
+        component: resolve(__dirname, 'pages/index.vue')
+      }, {
+        path: '/search',
+        redirect: '/'
+      })
+    }
   }
+
 }

@@ -54,3 +54,22 @@ button {
     border-color: transparent;
   }
 }
+
+.loader {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("~/assets/img/spinner.svg");
+    background-position: center;
+    background-color: white;
+    background-repeat: no-repeat;
+  }
+}

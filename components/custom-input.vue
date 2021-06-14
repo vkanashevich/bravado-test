@@ -5,10 +5,10 @@
     </div>
     <input
       ref="search"
-      v-model="inputValue"
+      :value="value"
       type="text"
       class="search__input"
-      placeholder="Type search text here"
+      placeholder="Type search text here (min. 2 chars)"
       @keyup="onChange"
     >
   </div>
@@ -16,17 +16,18 @@
 
 <script>
 export default {
-  name: 'Input',
-  data () {
-    return {
-      inputValue: ''
+  name: 'CustomInput',
+  props: {
+    value: {
+      type: String,
+      default: ''
     }
   },
   methods: {
     onChange () {
       clearTimeout(this.emitTemeout)
       this.emitTemeout = setTimeout(() => {
-        this.$emit('change', this.inputValue.trim())
+        this.$emit('input', this.$refs.search.value)
       }, 200)
     },
     goToInput () {
@@ -37,7 +38,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-// будет время - откажемся и от фиксированных единиц в пользу em
 .search {
   background: #fafafa;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.12), 0 2px 2px rgba(0, 0, 0, 0.24);
