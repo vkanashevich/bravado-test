@@ -15,6 +15,9 @@
         :search-value="searchValue"
         @selectionChange="selectionChange($event, item, index)"
       />
+      <div v-if="searchValue && !outputList.length" class="found-nothing">
+        Found nothing
+      </div>
     </div>
   </div>
 </template>
@@ -164,7 +167,9 @@ export default {
   margin-top: 20px;
 }
 
-.poach {
-  display: none;
+.found-nothing {
+  text-align: center;
+  font-size: 24px;
+  line-height: 28px;
 }
 </style>
